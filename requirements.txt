@@ -1,10 +1,12 @@
+fastapi[standard]
 transformers
 torch
 torchvision
 torchaudio
-fastapi
 uvicorn
-scrapy
 bs4
 spacy
-# python -m spacy download en_core_web_sm
+sentencepiece
+typer
+python-dotenv
+pandas
