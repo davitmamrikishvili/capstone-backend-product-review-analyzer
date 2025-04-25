@@ -14,10 +14,3 @@ class AspectBasedSentimentAnalyzer:
         for aspect in aspects:
             result.append((aspect, *self._pipeline(prompt, text_pair=aspect, *args, **kwargs)))
         return result
-
-
-# aspect_based_sentiment_analyzer = AspectBasedSentimentAnalyzer()
-# result = aspect_based_sentiment_analyzer.analyze_sentiment('The camera quality of this phone is amazing, but the Battery kinda sucks.',
-#                                                   ['camera', 'phone', 'battery',])
-# print(result)
-# [('camera', {'label': 'Positive', 'score': 0.9976174235343933}), ('phone', {'label': 'Positive', 'score': 0.7831689715385437}), ('battery', {'label': 'Negative', 'score': 0.9960673451423645})]

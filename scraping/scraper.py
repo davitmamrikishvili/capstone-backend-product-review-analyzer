@@ -1,48 +1,41 @@
-from scrapy import Spider
-from bs4 import BeautifulSoup
+import os
+import requests
+from dotenv import load_dotenv
+from utils.utils import get_walmart_product_id
 
+class Scraper:
+    """
+    A class to scrape product reviews from Walmart using the ZenRows API.
+    """
 
-class AmazonSpider(Spider):
-    name = "amazon"
-
-    allowed_domains = ["amazon.com"]
-
-    custom_settings = {
-        "LOG_LEVEL": "INFO",
-        "DOWNLOAD_DELAY": 2,  # delay between requests (in seconds),
-        "CLOSESPIDER_ITEMCOUNT": 50,  # number of items to scrape
-        "COOKIES_ENABLED": True,
-        "USER_AGENT": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
-    }
-
-    def __init__(self, *args, **kwargs):
-        super(AmazonSpider, self).__init__(*args, **kwargs)
-
-        self.start_urls = [kwargs.get("start_url")]
-
-    def get_text(self, el):
-        return BeautifulSoup(el.extract(), "html.parser").get_text(
-            strip=True,
-            separator=" ",
-        )
-
-    def parse_rating_string(self, text):
-        return int(float(text[:3]))
-
-    def parse(self, response):
-        data = response.css("#cm_cr-review_list")
-
-        title = data.css(".review-title")
-        star_ratings = data.css(".review-rating")
-        feedback_text = data.css(".review-text > span")
-
-        for i, _ in enumerate(star_ratings):
-            yield {
-                "title": self.get_text(title[i]),
-                "rating": self.parse_rating_string(self.get_text(star_ratings[i])),
-                "text": self.get_text(feedback_text[i]),
-            }
-
-        for next_page in response.css("li.a-last > a"):
-            yield response.follow(next_page, self.parse)
-            
+    def __init__(self):
+        load_dotenv()
+        self._api_key = os.getenv("API_KEY")
+        self._base_url = "https://ecommerce.api.zenrows.com/v1/targets/walmart/reviews/"
+        self._session = requests.Session()
+    
+    def extract_reviews(self, url: str, count: int = 100, sort: str = "relevancy"):
+        params = {
+            "apikey": self._api_key,
+            "sort": sort,
+        }
+        product_id = get_walmart_product_id(url)
+        zenrows_url = f"{self._base_url}{product_id}"
+        response = self._session.get(zenrows_url, params=params).json()
+        review_count = min(count, response["review_count"])
+        for review in response["product_reviews_list"]:
+            yield review["review_content"]
+            review_count -= 1
+            if review_count == 0:
+                break
+        
+        next_page = response["pagination"].get("next_page")
+        while next_page and review_count > 0:
+            params["path"] = next_page
+            response = self._session.get(zenrows_url, params=params).json()
+            for review in response["product_reviews_list"]:
+                yield review["review_content"]
+                review_count -= 1
+                if review_count == 0:
+                    break
+            next_page = response["pagination"].get("next_page")
