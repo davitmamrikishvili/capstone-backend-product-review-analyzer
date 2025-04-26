@@ -1,10 +1,12 @@
 from typing import List, Optional
-from service.service import reviews_to_csv
+from typing_extensions import Annotated
+from service.service import reviews_to_csv, summarize_reviews
 from cli.model import Order
 import typer
 from pathlib import Path
 from rich import print
-from typing_extensions import Annotated
+from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
+
 
 app = typer.Typer(pretty_exceptions_show_locals=False)
 
@@ -34,9 +36,20 @@ def scrape(
     """
     Scrape reviews from a product URL and save them to a CSV file.
     """
-    print(f"Scraping reviews from {url}...")
-    reviews_to_csv(url, count, sort, destination)
-    print(f"Reviews saved to {destination}")
+    print(
+        f"[yellow]Scraping [italic][link={url}]reviews[/link][/italic][/yellow] :hourglass_not_done:"
+    )
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        TimeElapsedColumn(),
+        transient=True,
+    ) as progress:
+        progress.add_task(description="Scraping...", total=None)
+        reviews_to_csv(url, count, sort, destination)
+    print(
+        f"[green]Reviews saved to [italic]{destination}[/italic]![/green] :white_heavy_check_mark:"
+    )
 
 
 @app.command()
@@ -69,7 +82,19 @@ def summarize(
     """
     if source.suffix != ".csv":
         raise typer.BadParameter("The source file must be a CSV file.")
-    typer.echo(f"Analyzing sentiment from CSV file: {source}...")
+    print(
+        f"[yellow]Summarizing the reviews from [italic]{source}[/italic][/yellow] :hourglass_not_done:"
+    )
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        TimeElapsedColumn(),
+        transient=True,
+    ) as progress:
+        progress.add_task(description="Summarizing...", total=None)
+        summary = summarize_reviews(source)
+    print(f"[green]Summary completed![/green] :white_heavy_check_mark:")
+    print(summary)
 
 
 if __name__ == "__main__":
