@@ -10,7 +10,7 @@ def get_walmart_product_id(url: str) -> str:
     Returns:
         str: The extracted product ID.
     """
-    pattern = r"(?<=\/)\d{10,14}"
+    pattern = r"((?<=^)|(?<=\/))\d{10,14}"
     match = re.search(pattern, url)
     product_id = match.group() 
     return product_id
