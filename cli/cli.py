@@ -1,5 +1,6 @@
 from typing import List, Optional
 from typing_extensions import Annotated
+from cli.progress import progress_bar
 from service.service import reviews_to_csv, summarize_reviews
 from cli.model import Order
 import typer
@@ -39,13 +40,7 @@ def scrape(
     print(
         f"[yellow]Scraping [italic][link={url}]reviews[/link][/italic][/yellow] :hourglass_not_done:"
     )
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        TimeElapsedColumn(),
-        transient=True,
-    ) as progress:
-        progress.add_task(description="Scraping...", total=None)
+    with progress_bar("Scraping..."):
         reviews_to_csv(url, count, sort, destination)
     print(
         f"[bold green]Reviews saved to [italic]{destination}[/italic]![/bold green] :white_heavy_check_mark:"
@@ -56,7 +51,7 @@ def scrape(
 def analyze(
     source: Annotated[
         Path,
-        typer.Option("--source", "-s", dir_okay=False, help="Source of the CSV file"),
+        typer.Argument(dir_okay=False, help="Source of the CSV file"),
     ],
     aspects: Annotated[
         Optional[List[str]],
@@ -82,7 +77,7 @@ def analyze(
 def summarize(
     source: Annotated[
         Path,
-        typer.Option("--source", "-s", dir_okay=False, help="Source of the CSV file"),
+        typer.Argument(dir_okay=False, help="Source of the CSV file"),
     ],
 ):
     """
@@ -93,13 +88,7 @@ def summarize(
     print(
         f"[bold yellow]Summarizing the reviews from [italic]{source}[/italic][/bold yellow] :hourglass_not_done:"
     )
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        TimeElapsedColumn(),
-        transient=True,
-    ) as progress:
-        progress.add_task(description="Summarizing...", total=None)
+    with progress_bar("Summarizing..."):
         summary = summarize_reviews(source)
     print(f"[bold green]Summary completed![/bold green] :white_heavy_check_mark:")
     print(summary)
