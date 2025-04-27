@@ -2,7 +2,6 @@ import sys
 import uvicorn
 from rich import print
 
-
 from cli.cli import app as cli_app
 from api.api import app as api_app
 

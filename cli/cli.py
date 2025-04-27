@@ -1,12 +1,16 @@
 from typing import List, Optional
 from typing_extensions import Annotated
 from cli.progress import progress_bar
-from service.service import reviews_to_csv, summarize_reviews
+from service.service import (
+    aspect_based_sentiment_analysis,
+    general_sentiment_analysis,
+    reviews_to_csv,
+    summarize_reviews,
+)
 from cli.model import Order
 import typer
 from pathlib import Path
 from rich import print
-from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 
 
 app = typer.Typer(pretty_exceptions_show_locals=False)
@@ -38,7 +42,7 @@ def scrape(
     Scrape reviews from a product URL and save them to a CSV file.
     """
     print(
-        f"[yellow]Scraping [italic][link={url}]reviews[/link][/italic][/yellow] :hourglass_not_done:"
+        f"[bold yellow]Scraping [italic][link={url}]reviews[/link][/italic][/bold yellow] :hourglass_not_done:"
     )
     with progress_bar("Scraping..."):
         reviews_to_csv(url, count, sort, destination)
@@ -65,12 +69,28 @@ def analyze(
         raise typer.BadParameter("The source file must be a CSV file.")
     if aspects is None:
         print(
-            "[yellow]No aspects provided. Performing general sentiment analysis.[/yellow]"
+            "[bold yellow]No aspects provided. Performing general sentiment analysis.[/bold yellow] :hourglass_not_done:"
         )
+        with progress_bar("Analyzing..."):
+            (
+                positive_count,
+                negative_count,
+                most_positive_review,
+                most_negative_review,
+            ) = general_sentiment_analysis(source)
+            print(
+                f"[bold green]Analysis completed! Check out [italic]{source}[/italic].[/bold green] :white_heavy_check_mark:\n"
+                f"[bold blue]Number of positive reviews :[/bold blue] {positive_count}\n"
+                f"[bold blue]Number of negative reviews:[/bold blue] {negative_count}\n"
+                f"[bold blue]Most positive review:[/bold blue] [dark_orange]{most_positive_review}[/dark_orange]\n"
+                f"[bold blue]Most negative review:[/bold blue] [dark_orange]{most_negative_review}[/dark_orange]"
+            )
     else:
         print(
-            f"[yellow]Analyzing sentiment for aspects: [italic]{', '.join(aspects)}[/italic][/yellow]"
+            f"[bold yellow]Analyzing sentiment for aspects: [italic]{', '.join(aspects)}[/italic][/bold yellow] :hourglass_not_done:"
         )
+        with progress_bar("Analyzing..."):
+            aspect_based_sentiment_analysis(source)
 
 
 @app.command("summarize")
@@ -91,7 +111,7 @@ def summarize(
     with progress_bar("Summarizing..."):
         summary = summarize_reviews(source)
     print(f"[bold green]Summary completed![/bold green] :white_heavy_check_mark:")
-    print(summary)
+    print(f"[dark_orange]{summary}[/dark_orange]")
 
 
 @app.callback()
