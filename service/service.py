@@ -24,3 +24,11 @@ def summarize_reviews(source: Path) -> str:
     reviews = pd.read_csv(source)["reviews"].to_list()
     summary = summarizer.summarize(reviews)
     return summary
+
+
+def aspect_based_sentiment_analysis():
+    pass
+
+
+def general_sentiment_analysis():
+    pass

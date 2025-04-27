@@ -11,7 +11,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
 app = typer.Typer(pretty_exceptions_show_locals=False)
 
 
-@app.command()
+@app.command("scrape")
 def scrape(
     url: str,
     count: Annotated[
@@ -48,11 +48,11 @@ def scrape(
         progress.add_task(description="Scraping...", total=None)
         reviews_to_csv(url, count, sort, destination)
     print(
-        f"[green]Reviews saved to [italic]{destination}[/italic]![/green] :white_heavy_check_mark:"
+        f"[bold green]Reviews saved to [italic]{destination}[/italic]![/bold green] :white_heavy_check_mark:"
     )
 
 
-@app.command()
+@app.command("analyze")
 def analyze(
     source: Annotated[
         Path,
@@ -68,9 +68,17 @@ def analyze(
     """
     if source.suffix != ".csv":
         raise typer.BadParameter("The source file must be a CSV file.")
+    if aspects is None:
+        print(
+            "[yellow]No aspects provided. Performing general sentiment analysis.[/yellow]"
+        )
+    else:
+        print(
+            f"[yellow]Analyzing sentiment for aspects: [italic]{', '.join(aspects)}[/italic][/yellow]"
+        )
 
 
-@app.command()
+@app.command("summarize")
 def summarize(
     source: Annotated[
         Path,
@@ -83,7 +91,7 @@ def summarize(
     if source.suffix != ".csv":
         raise typer.BadParameter("The source file must be a CSV file.")
     print(
-        f"[yellow]Summarizing the reviews from [italic]{source}[/italic][/yellow] :hourglass_not_done:"
+        f"[bold yellow]Summarizing the reviews from [italic]{source}[/italic][/bold yellow] :hourglass_not_done:"
     )
     with Progress(
         SpinnerColumn(),
@@ -93,8 +101,16 @@ def summarize(
     ) as progress:
         progress.add_task(description="Summarizing...", total=None)
         summary = summarize_reviews(source)
-    print(f"[green]Summary completed![/green] :white_heavy_check_mark:")
+    print(f"[bold green]Summary completed![/bold green] :white_heavy_check_mark:")
     print(summary)
+
+
+@app.callback()
+def cli():
+    """
+    CLI for scraping and analyzing reviews.
+    """
+    pass
 
 
 if __name__ == "__main__":
