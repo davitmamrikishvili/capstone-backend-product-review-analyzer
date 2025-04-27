@@ -61,13 +61,42 @@ def summarize_reviews(source: Path) -> str:
     return summary
 
 
-def aspect_based_sentiment_analysis(source: Path, aspects: List[str]):
-    pass
+def aspect_based_sentiment_analysis(
+    source: Path, aspects: List[str]
+) -> dict[str, List[tuple[str, str, float]]]:
+    """
+    Analyze sentiment of reviews for specific aspects.
+
+    Args:
+        source (Path): Path to the CSV file containing reviews.
+        aspects (List[str]): List of aspects to analyze in the reviews.
+
+    Returns:
+        dict[str, List[tuple[str, str, float]]]: A dictionary where:
+            - key: aspect name
+            - value: list of tuples, each containing:
+                - review text (str)
+                - sentiment label (str)
+                - sentiment score (float)
+    """
+    reviews_df = pd.read_csv(source)
+    result = {aspect: [] for aspect in aspects}
+
+    analyzed_aspects = reviews_df["review"].apply(
+        aspect_based_sentiment_analyzer.analyze_sentiment, args=(aspects,)
+    )
+    for (_, review), analyzed_aspect in zip(reviews_df.iterrows(), analyzed_aspects):
+        review = review["review"]
+        for aspect, sentiment in analyzed_aspect:
+            label = sentiment["label"]
+            score = round(sentiment["score"], 5)
+            result.setdefault(aspect, []).append((review, label, score))
+    return result
 
 
 def general_sentiment_analysis(source: Path) -> tuple[int, int, str, str]:
     """
-    Analyze sentiment of reviews and save results back to the CSV.
+    Analyze sentiment of reviews and save results back to CSV.
 
     Args:
         source (Path): Path to the CSV file containing reviews.
@@ -79,15 +108,15 @@ def general_sentiment_analysis(source: Path) -> tuple[int, int, str, str]:
             - Most positive review (highest positive sentiment score)
             - Most negative review (highest negative sentiment score)
     """
-    df = pd.read_csv(source)
+    reviews_df = pd.read_csv(source)
 
-    results = df["review"].apply(sentiment_analyzer.analyze_sentiment)
+    results = reviews_df["review"].apply(sentiment_analyzer.analyze_sentiment)
 
-    df["sentiment_label"] = results.apply(lambda x: x[0]["label"])
-    df["sentiment_score"] = results.apply(lambda x: round(x[0]["score"], 5))
+    reviews_df["sentiment_label"] = results.apply(lambda x: x[0]["label"])
+    reviews_df["sentiment_score"] = results.apply(lambda x: round(x[0]["score"], 5))
 
-    positive_df = df[df["sentiment_label"] == "POSITIVE"]
-    negative_df = df[df["sentiment_label"] == "NEGATIVE"]
+    positive_df = reviews_df[reviews_df["sentiment_label"] == "POSITIVE"]
+    negative_df = reviews_df[reviews_df["sentiment_label"] == "NEGATIVE"]
 
     positive_count = len(positive_df)
     negative_count = len(negative_df)
@@ -104,6 +133,6 @@ def general_sentiment_analysis(source: Path) -> tuple[int, int, str, str]:
         else ""
     )
 
-    df.to_csv(source, index=False)
+    reviews_df.to_csv(source, index=False)
 
     return positive_count, negative_count, most_positive_review, most_negative_review

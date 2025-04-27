@@ -17,6 +17,8 @@ class AspectBasedSentimentAnalyzer:
     ) -> List[dict]:
         result = []
         for aspect in aspects:
+            if aspect.casefold() not in prompt.casefold():
+                continue
             result.append(
                 (aspect, *self._pipeline(prompt, text_pair=aspect, *args, **kwargs))
             )
