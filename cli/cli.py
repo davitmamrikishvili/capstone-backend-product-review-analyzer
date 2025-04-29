@@ -84,7 +84,7 @@ def analyze(
                 "[bold yellow]No aspects provided. Performing general sentiment analysis.[/bold yellow] :hourglass_not_done:"
             )
             result = general_sentiment_analysis(source, destination)
-            print(get_analysis_stats(result))
+            print(get_analysis_stats(*result))
         else:
             print(
                 f"[bold yellow]Analyzing sentiment for aspect(s): [italic]{', '.join(aspects)}[/italic][/bold yellow] :hourglass_not_done:"
@@ -103,10 +103,10 @@ def analyze(
                         ]
                     }
                 )
-                print(f"Aspect {aspect}:")
+                print(f"Aspect '{aspect}':")
                 print(stats)
         print(
-            f"[bold green]Analysis completed! Check out [italic]{destination}[/italic].[/bold green] :white_heavy_check_mark:\n"
+            f"[bold green]Analysis completed! Check out [italic]{destination}[/italic].[/bold green] :white_heavy_check_mark:"
         )
 
 

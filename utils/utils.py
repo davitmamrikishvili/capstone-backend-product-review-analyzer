@@ -38,7 +38,7 @@ def get_analysis_stats(
         str: Formatted string with the analysis results.
     """
     neutral_stat = (
-        f"[bold blue]Number of neutral reviews:[/bold blue] [bold cream]{neutral_count}[/bold cream]\n"
+        f"[bold blue]# of neutral reviews:[/bold blue] [bold grey78]{neutral_count}[/bold grey78]\n"
         if neutral_count is not None
         else ""
     )
@@ -54,9 +54,9 @@ def get_analysis_stats(
     )
 
     stats = (
-        f"[bold blue]Number of positive reviews :[/bold blue] [bold green]{positive_count}[/bold green]\n"
+        f"[bold blue]# of positive reviews:[/bold blue] [bold green]{positive_count}[/bold green]\n"
         f"{neutral_stat}"
-        f"[bold blue]Number of negative reviews:[/bold blue] [bold red]{negative_count}[/bold red]\n"
+        f"[bold blue]# of negative reviews:[/bold blue] [bold red]{negative_count}[/bold red]\n"
         f"{positve_review_stat}{negative_review_stat}"
     )
 

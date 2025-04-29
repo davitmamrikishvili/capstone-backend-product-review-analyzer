@@ -124,6 +124,7 @@ def aspect_based_sentiment_analysis(
                 }
             )
         )
+        .astype({"positive_count": int, "neutral_count": int, "negative_count": int})
         .to_dict(orient="index")
     )
 
