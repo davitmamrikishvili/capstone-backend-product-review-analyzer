@@ -38,26 +38,30 @@ def get_analysis_stats(
     Returns:
         str: Formatted string with the analysis results.
     """
+    positive = "[bold green]positive[/bold green]"
+    neutral = "[bold grey78]neutral[/bold grey78]"
+    negative = "[bold red]negative[/bold red]"
+
     neutral_stat = (
-        f"[bold blue]# of neutral reviews:[/bold blue] [bold grey78]{neutral_count}[/bold grey78]\n"
+        f"[bold blue]# of {neutral} reviews:[/bold blue] [bold grey78]{neutral_count}[/bold grey78]\n"
         if neutral_count is not None
         else ""
     )
     positve_review_stat = (
-        f"[bold blue]Most positive review:[/bold blue] [dark_orange]{most_positive_review}[/dark_orange]\n"
+        f"[bold blue]Most {positive} review:[/bold blue] [dark_orange]{most_positive_review}[/dark_orange]\n"
         if not pd.isna(most_positive_review)
         else ""
     )
     negative_review_stat = (
-        f"[bold blue]Most negative review:[/bold blue] [dark_orange]{most_negative_review}[/dark_orange]"
+        f"[bold blue]Most {negative} review:[/bold blue] [dark_orange]{most_negative_review}[/dark_orange]"
         if not pd.isna(most_negative_review)
         else ""
     )
 
     stats = (
-        f"[bold blue]# of positive reviews:[/bold blue] [bold green]{positive_count}[/bold green]\n"
+        f"[bold blue]# of {positive} reviews:[/bold blue] [bold green]{positive_count}[/bold green]\n"
         f"{neutral_stat}"
-        f"[bold blue]# of negative reviews:[/bold blue] [bold red]{negative_count}[/bold red]\n"
+        f"[bold blue]# of {negative} reviews:[/bold blue] [bold red]{negative_count}[/bold red]\n"
         f"{positve_review_stat}{negative_review_stat}"
     )
 
