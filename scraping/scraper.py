@@ -2,7 +2,7 @@ import os
 import requests
 from typing import Generator
 from dotenv import load_dotenv
-from utils.utils import get_walmart_product_id
+from utils.utils import extract_walmart_product_id
 
 
 class Scraper:
@@ -23,7 +23,7 @@ class Scraper:
             "apikey": self._api_key,
             "sort": sort,
         }
-        product_id = get_walmart_product_id(url)
+        product_id = extract_walmart_product_id(url)
         response = self._session.get(
             f"{self._base_url}{product_id}", params=params
         ).json()

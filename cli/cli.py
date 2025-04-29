@@ -7,6 +7,7 @@ from service.service import (
     reviews_to_csv,
     summarize_reviews,
 )
+from utils.utils import get_analysis_stats
 from cli.model import Order
 import typer
 from pathlib import Path
@@ -41,6 +42,8 @@ def scrape(
     """
     Scrape reviews from a product URL and save them to a CSV file.
     """
+    if destination.suffix != ".csv":
+        raise typer.BadParameter("`destination` must be CSV file.")
     print(
         f"[bold yellow]Scraping [italic][link={url}]reviews[/link][/italic][/bold yellow] :hourglass_not_done:"
     )
@@ -55,7 +58,14 @@ def scrape(
 def analyze(
     source: Annotated[
         Path,
-        typer.Argument(dir_okay=False, help="Source of the CSV file"),
+        typer.Argument(dir_okay=False, exists=True, help="Source of the CSV file"),
+    ],
+    destination: Annotated[
+        Path,
+        typer.Argument(
+            dir_okay=False,
+            help="Destination of the CSV file for analysis results",
+        ),
     ],
     aspects: Annotated[
         Optional[List[str]],
@@ -65,32 +75,39 @@ def analyze(
     """
     Analyze sentiment from a CSV file.
     """
-    if source.suffix != ".csv":
-        raise typer.BadParameter("The source file must be a CSV file.")
-    if aspects is None:
-        print(
-            "[bold yellow]No aspects provided. Performing general sentiment analysis.[/bold yellow] :hourglass_not_done:"
-        )
-        with progress_bar("Analyzing..."):
-            (
-                positive_count,
-                negative_count,
-                most_positive_review,
-                most_negative_review,
-            ) = general_sentiment_analysis(source)
+    if source.suffix != ".csv" or destination.suffix != ".csv":
+        raise typer.BadParameter("Both `source` and `destination` must be CSV files.")
+
+    with progress_bar("Analyzing..."):
+        if aspects is None:
             print(
-                f"[bold green]Analysis completed! Check out [italic]{source}[/italic].[/bold green] :white_heavy_check_mark:\n"
-                f"[bold blue]Number of positive reviews :[/bold blue] {positive_count}\n"
-                f"[bold blue]Number of negative reviews:[/bold blue] {negative_count}\n"
-                f"[bold blue]Most positive review:[/bold blue] [dark_orange]{most_positive_review}[/dark_orange]\n"
-                f"[bold blue]Most negative review:[/bold blue] [dark_orange]{most_negative_review}[/dark_orange]"
+                "[bold yellow]No aspects provided. Performing general sentiment analysis.[/bold yellow] :hourglass_not_done:"
             )
-    else:
+            result = general_sentiment_analysis(source, destination)
+            print(get_analysis_stats(result))
+        else:
+            print(
+                f"[bold yellow]Analyzing sentiment for aspect(s): [italic]{', '.join(aspects)}[/italic][/bold yellow] :hourglass_not_done:"
+            )
+            result = aspect_based_sentiment_analysis(source, destination, aspects)
+            for aspect, stats_dict in result.items():
+                stats = get_analysis_stats(
+                    **{
+                        key: stats_dict[key]
+                        for key in [
+                            "positive_count",
+                            "negative_count",
+                            "neutral_count",
+                            "most_positive_review",
+                            "most_negative_review",
+                        ]
+                    }
+                )
+                print(f"Aspect {aspect}:")
+                print(stats)
         print(
-            f"[bold yellow]Analyzing sentiment for aspects: [italic]{', '.join(aspects)}[/italic][/bold yellow] :hourglass_not_done:"
+            f"[bold green]Analysis completed! Check out [italic]{destination}[/italic].[/bold green] :white_heavy_check_mark:\n"
         )
-        with progress_bar("Analyzing..."):
-            aspect_based_sentiment_analysis(source)
 
 
 @app.command("summarize")

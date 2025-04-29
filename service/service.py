@@ -62,13 +62,14 @@ def summarize_reviews(source: Path) -> str:
 
 
 def aspect_based_sentiment_analysis(
-    source: Path, aspects: List[str]
+    source: Path, destination: Path, aspects: List[str]
 ) -> dict[str, List[tuple[str, str, float]]]:
     """
     Analyze sentiment of reviews for specific aspects.
 
     Args:
         source (Path): Path to the CSV file containing reviews.
+        destination (Path): Path to save the updated CSV file with sentiment analysis results.
         aspects (List[str]): List of aspects to analyze in the reviews.
 
     Returns:
@@ -79,27 +80,66 @@ def aspect_based_sentiment_analysis(
                 - sentiment label (str)
                 - sentiment score (float)
     """
-    reviews_df = pd.read_csv(source)
-    result = {aspect: [] for aspect in aspects}
 
-    analyzed_aspects = reviews_df["review"].apply(
-        aspect_based_sentiment_analyzer.analyze_sentiment, args=(aspects,)
+    def extract_aspects(review, aspects):
+        series = []
+        for result in aspect_based_sentiment_analyzer.analyze_sentiment(
+            review, aspects
+        ):
+            if result is []:
+                continue
+            aspect, sentiment = result
+            label, score = sentiment["label"], round(sentiment["score"], 5)
+            series.append([aspect, label, score])
+        if series == []:
+            return pd.Series([None, None, None])
+        return pd.Series(*series)
+
+    reviews_df = pd.read_csv(source)
+    reviews_df[["aspect", "label", "score"]] = reviews_df["review"].apply(
+        extract_aspects, args=(aspects,)
     )
-    for (_, review), analyzed_aspect in zip(reviews_df.iterrows(), analyzed_aspects):
-        review = review["review"]
-        for aspect, sentiment in analyzed_aspect:
-            label = sentiment["label"]
-            score = round(sentiment["score"], 5)
-            result.setdefault(aspect, []).append((review, label, score))
+    reviews_df.sort_values(
+        by=["aspect", "label", "score"], ascending=[True, True, False], inplace=True
+    )
+
+    result = (
+        reviews_df.groupby("aspect")
+        .apply(
+            lambda x: pd.Series(
+                {
+                    "positive_count": (x["label"] == "Positive").sum(),
+                    "neutral_count": (x["label"] == "Neutral").sum(),
+                    "negative_count": (x["label"] == "Negative").sum(),
+                    "most_positive_review": (
+                        x.loc[x[x["label"] == "Positive"]["score"].idxmax(), "review"]
+                        if not x[x["label"] == "Positive"].empty
+                        else None
+                    ),
+                    "most_negative_review": (
+                        x.loc[x[x["label"] == "Negative"]["score"].idxmax(), "review"]
+                        if not x[x["label"] == "Negative"].empty
+                        else None
+                    ),
+                }
+            )
+        )
+        .to_dict(orient="index")
+    )
+
+    reviews_df.to_csv(destination, index=False)
     return result
 
 
-def general_sentiment_analysis(source: Path) -> tuple[int, int, str, str]:
+def general_sentiment_analysis(
+    source: Path, destination: Path
+) -> tuple[int, int, str, str]:
     """
     Analyze sentiment of reviews and save results back to CSV.
 
     Args:
         source (Path): Path to the CSV file containing reviews.
+        destination (Path): Path to save the updated CSV file with sentiment analysis results.
 
     Returns:
         tuple[int, int, str, str]: A tuple containing:
@@ -133,6 +173,6 @@ def general_sentiment_analysis(source: Path) -> tuple[int, int, str, str]:
         else ""
     )
 
-    reviews_df.to_csv(source, index=False)
+    reviews_df.to_csv(destination, index=False)
 
     return positive_count, negative_count, most_positive_review, most_negative_review

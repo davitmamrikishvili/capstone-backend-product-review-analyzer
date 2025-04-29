@@ -14,7 +14,19 @@ class AspectBasedSentimentAnalyzer:
 
     def analyze_sentiment(
         self, prompt: str, aspects: List[str], *args, **kwargs
-    ) -> List[dict]:
+    ) -> List[tuple[str, dict[str, float]]]:
+        """
+        Analyze the sentiment of a given prompt for specific aspects.
+        Args:
+            prompt (str): The text to analyze.
+            aspects (List[str]): List of aspects to analyze in the text.
+            *args: Additional arguments for the pipeline.
+            **kwargs: Additional keyword arguments for the pipeline.
+        Returns:
+            List[tuple[str, dict[str, float]]]: A list of tuples where each tuple contains:
+                - aspect (str): The aspect being analyzed.
+                - sentiment (dict[str, float]): A dictionary with sentiment labels as keys and their scores as values.
+        """
         result = []
         for aspect in aspects:
             if aspect.casefold() not in prompt.casefold():

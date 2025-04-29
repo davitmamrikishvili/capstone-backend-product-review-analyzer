@@ -48,10 +48,10 @@ python main.py scrape https://www.walmart.com/ip/product-id --count 100 --order 
 2. **Analyze Reviews**
 ```bash
 # General sentiment analysis
-python main.py analyze reviews.csv
+python main.py analyze reviews.csv result.csv
 
 # Aspect-based sentiment analysis
-python main.py analyze reviews.csv --aspect battery --aspect display
+python main.py analyze reviews.csv result.csv --aspect battery --aspect display
 ```
 
 3. **Summarize Reviews**
