@@ -19,6 +19,18 @@ class Scraper:
     def extract_reviews(
         self, url: str, count: int = 100, sort: str = "relevancy"
     ) -> Generator:
+        """
+        Extract reviews from a given Walmart product URL.
+
+        Args:
+            url (str): The Walmart product URL.
+            count (int): Number of reviews to extract. Default is 100.
+            sort (str): Sorting method for the reviews. Default is "relevancy".
+
+        Yields:
+            str: The review content.
+        """
+
         params = {
             "apikey": self._api_key,
             "sort": sort,

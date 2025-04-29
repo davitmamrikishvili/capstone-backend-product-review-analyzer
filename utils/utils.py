@@ -33,6 +33,7 @@ def get_analysis_stats(
         negative_count (int): Number of negative reviews.
         most_positive_review (str): The most positive review.
         most_negative_review (str): The most negative review.
+        neutral_count (int, optional): Number of neutral reviews. Applicable for aspect-based sentiment analysis.
 
     Returns:
         str: Formatted string with the analysis results.
