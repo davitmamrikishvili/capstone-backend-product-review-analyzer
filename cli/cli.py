@@ -8,7 +8,7 @@ from service.service import (
     summarize_reviews,
 )
 from utils.utils import get_analysis_stats
-from cli.model import Order
+from model.model import Order
 import typer
 from pathlib import Path
 from rich import print
