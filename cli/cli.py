@@ -19,7 +19,13 @@ app = typer.Typer(pretty_exceptions_show_locals=False)
 
 @app.command("scrape")
 def scrape(
-    url: str,
+    url: Annotated[
+        str,
+        typer.Argument(
+            help="The Walmart product URL to scrape reviews from",
+            metavar="URL",
+        ),
+    ],
     count: Annotated[
         int,
         typer.Option(

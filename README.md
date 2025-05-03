@@ -32,7 +32,7 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-4. Set up API_KEY in .env (Optional, only needed if you want to scrape data)
+4. (Optional, only needed if you want to scrape data) Set up API_KEY in .env 
 
 ## Usage
 
