@@ -17,7 +17,7 @@ def reviews_to_csv(
     url: str,
     count: int = 100,
     sort: str = "relevancy",
-    destination: Path = "reviews.csv",
+    destination: Path = None,
 ) -> pd.DataFrame:
     """
     Scrape reviews from a given URL and save them to a CSV file.
@@ -42,7 +42,9 @@ def reviews_to_csv(
     generator = scraper.extract_reviews(url, count, sort)
     reviews = pd.DataFrame(generator)
     reviews.columns = ["review"]
-    reviews.to_csv(destination, index=False)
+
+    if destination is not None:
+        reviews.to_csv(destination, index=False)
     return reviews
 
 
