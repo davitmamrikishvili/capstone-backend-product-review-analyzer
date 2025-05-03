@@ -82,55 +82,58 @@ def aspect_based_sentiment_analysis(
                 - sentiment label (str)
                 - sentiment score (float)
     """
-
-    def extract_aspects(review, aspects):
-        series = []
-        for result in aspect_based_sentiment_analyzer.analyze_sentiment(
-            review, aspects
-        ):
-            if result is []:
-                continue
-            aspect, sentiment = result
-            label, score = sentiment["label"], round(sentiment["score"], 5)
-            series.append([aspect, label, score])
-        if series == []:
-            return pd.Series([None, None, None])
-        return pd.Series(*series)
-
     reviews_df = pd.read_csv(source)
-    reviews_df[["aspect", "label", "score"]] = reviews_df["review"].apply(
-        extract_aspects, args=(aspects,)
-    )
-    reviews_df.sort_values(
+    results_df = pd.DataFrame()
+
+    for _, row in reviews_df.iterrows():
+        review = row["review"]
+        analysis = aspect_based_sentiment_analyzer.analyze_sentiment(review, aspects)
+
+        for result in analysis:
+            if result and isinstance(result, tuple):
+                aspect, sentiment = result
+                results_df = pd.concat(
+                    [
+                        results_df,
+                        pd.DataFrame(
+                            [
+                                {
+                                    "review": review,
+                                    "aspect": aspect,
+                                    "label": sentiment["label"],
+                                    "score": round(sentiment["score"], 5),
+                                }
+                            ]
+                        ),
+                    ]
+                )
+
+    results_df.sort_values(
         by=["aspect", "label", "score"], ascending=[True, True, False], inplace=True
     )
 
-    result = (
-        reviews_df.groupby("aspect")
-        .apply(
-            lambda x: pd.Series(
-                {
-                    "positive_count": (x["label"] == "Positive").sum(),
-                    "neutral_count": (x["label"] == "Neutral").sum(),
-                    "negative_count": (x["label"] == "Negative").sum(),
-                    "most_positive_review": (
-                        x.loc[x[x["label"] == "Positive"]["score"].idxmax(), "review"]
-                        if not x[x["label"] == "Positive"].empty
-                        else None
-                    ),
-                    "most_negative_review": (
-                        x.loc[x[x["label"] == "Negative"]["score"].idxmax(), "review"]
-                        if not x[x["label"] == "Negative"].empty
-                        else None
-                    ),
-                }
-            )
-        )
-        .astype({"positive_count": int, "neutral_count": int, "negative_count": int})
-        .to_dict(orient="index")
-    )
+    result = {}
+    for aspect_name, group in results_df.groupby("aspect"):
+        positive_reviews = group[group["label"] == "Positive"]
+        negative_reviews = group[group["label"] == "Negative"]
 
-    reviews_df.to_csv(destination, index=False)
+        result[aspect_name] = {
+            "positive_count": len(positive_reviews),
+            "neutral_count": len(group[group["label"] == "Neutral"]),
+            "negative_count": len(negative_reviews),
+            "most_positive_review": (
+                positive_reviews.iloc[positive_reviews["score"].argmax()]["review"]
+                if not positive_reviews.empty
+                else None
+            ),
+            "most_negative_review": (
+                negative_reviews.iloc[negative_reviews["score"].argmax()]["review"]
+                if not negative_reviews.empty
+                else None
+            ),
+        }
+
+    results_df.to_csv(destination, index=False)
     return result
 
 
@@ -155,23 +158,23 @@ def general_sentiment_analysis(
 
     results = reviews_df["review"].apply(sentiment_analyzer.analyze_sentiment)
 
-    reviews_df["sentiment_label"] = results.apply(lambda x: x[0]["label"])
-    reviews_df["sentiment_score"] = results.apply(lambda x: round(x[0]["score"], 5))
+    reviews_df["label"] = results.apply(lambda x: x[0]["label"])
+    reviews_df["score"] = results.apply(lambda x: round(x[0]["score"], 5))
 
-    positive_df = reviews_df[reviews_df["sentiment_label"] == "POSITIVE"]
-    negative_df = reviews_df[reviews_df["sentiment_label"] == "NEGATIVE"]
+    positive_df = reviews_df[reviews_df["label"] == "POSITIVE"]
+    negative_df = reviews_df[reviews_df["label"] == "NEGATIVE"]
 
     positive_count = len(positive_df)
     negative_count = len(negative_df)
 
     most_positive_review = (
-        positive_df.loc[positive_df["sentiment_score"].idxmax(), "review"]
+        positive_df.loc[positive_df["score"].idxmax(), "review"]
         if not positive_df.empty
         else ""
     )
 
     most_negative_review = (
-        negative_df.loc[negative_df["sentiment_score"].idxmax(), "review"]
+        negative_df.loc[negative_df["score"].idxmax(), "review"]
         if not negative_df.empty
         else ""
     )
