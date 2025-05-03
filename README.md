@@ -66,7 +66,7 @@ Start the API server:
 python main.py api
 ```
 
-The API will be available at `http://127.0.0.1:8000`
+The API will be available at `http://127.0.0.1:8000`. For detailed API documentation, visit `http://127.0.0.1:8000/docs` after starting the server.
 
 ## Project Structure
 

@@ -71,7 +71,7 @@ async def analyze(
     aspects: Annotated[
         List[str],
         Query(
-            description="List of aspects to analyze",
+            description="List of aspects to analyze. Performs general sentiment analysis if not provided.",
             example=["battery", "buttons"],
         ),
     ] = None,
@@ -88,23 +88,45 @@ async def analyze(
 
         if aspects:
             aspect_based_sentiment_analysis(temp_review_file, temp_result_file, aspects)
-            df = pd.read_csv(temp_result_file)
+            result_df = pd.read_csv(temp_result_file)
+
+            grouped_df = result_df.groupby("review").apply(
+                lambda group: group[["aspect", "label", "score"]].to_dict("records")
+            )
+
+            grouped_results = [
+                {"review": review, "details": details}
+                for review, details in grouped_df.items()
+            ]
 
             return {
                 "status": "success",
                 "analysis_type": "aspect-based",
                 "aspects_analyzed": aspects,
-                "results": df.to_dict(),
+                "results": grouped_results,
             }
 
         else:
             general_sentiment_analysis(temp_review_file, temp_result_file)
-            df = pd.read_csv(temp_result_file)
+            result_df = pd.read_csv(temp_result_file)
+
+            grouped_df = result_df.groupby("review").apply(
+                lambda group: group[["label", "score"]].to_dict("records")
+            )
+
+            grouped_results = [
+                {
+                    "review": review,
+                    "label": details[0]["label"],
+                    "score": details[0]["score"],
+                }
+                for review, details in grouped_df.items()
+            ]
 
             return {
                 "status": "success",
                 "analysis_type": "general",
-                "results": df.to_dict(),
+                "results": grouped_results,
             }
 
     except Exception as e:
