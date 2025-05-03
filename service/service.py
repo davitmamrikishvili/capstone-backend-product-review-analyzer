@@ -100,7 +100,7 @@ def aspect_based_sentiment_analysis(
                                 {
                                     "review": review,
                                     "aspect": aspect,
-                                    "label": sentiment["label"],
+                                    "label": sentiment["label"].upper(),
                                     "score": round(sentiment["score"], 5),
                                 }
                             ]
@@ -114,12 +114,12 @@ def aspect_based_sentiment_analysis(
 
     result = {}
     for aspect_name, group in results_df.groupby("aspect"):
-        positive_reviews = group[group["label"] == "Positive"]
-        negative_reviews = group[group["label"] == "Negative"]
+        positive_reviews = group[group["label"] == "POSITIVE"]
+        negative_reviews = group[group["label"] == "NEGATIVE"]
 
         result[aspect_name] = {
             "positive_count": len(positive_reviews),
-            "neutral_count": len(group[group["label"] == "Neutral"]),
+            "neutral_count": len(group[group["label"] == "NEUTRAL"]),
             "negative_count": len(negative_reviews),
             "most_positive_review": (
                 positive_reviews.iloc[positive_reviews["score"].argmax()]["review"]

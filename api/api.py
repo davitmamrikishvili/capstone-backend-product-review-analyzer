@@ -6,6 +6,8 @@ from pydantic import BaseModel, HttpUrl, Field
 from pathlib import Path
 from model.model import Order
 from service.service import (
+    aspect_based_sentiment_analysis,
+    general_sentiment_analysis,
     reviews_to_csv,
     summarize_reviews,
 )
@@ -58,6 +60,53 @@ async def scrape(
             sort=sort,
         )
         return {"status": "success", "reviews": reviews["review"].tolist()}
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/analyze/")
+async def analyze(
+    reviews: ReviewList,
+    aspects: Annotated[
+        List[str],
+        Query(
+            description="List of aspects to analyze",
+            example=["battery", "buttons"],
+        ),
+    ] = None,
+):
+    """
+    Analyze sentiment from a list of reviews.
+    """
+    try:
+        temp_review_file = Path("temp.csv")
+        temp_result_file = Path("temp_result.csv")
+        pd.DataFrame(reviews.reviews, columns=["review"]).to_csv(
+            temp_review_file, index=False
+        )
+
+        if aspects:
+            aspect_based_sentiment_analysis(temp_review_file, temp_result_file, aspects)
+            df = pd.read_csv(temp_result_file)
+
+            return {
+                "status": "success",
+                "analysis_type": "aspect-based",
+                "aspects_analyzed": aspects,
+                "results": df.to_dict(),
+            }
+
+        else:
+            general_sentiment_analysis(temp_review_file, temp_result_file)
+            df = pd.read_csv(temp_result_file)
+
+            return {
+                "status": "success",
+                "analysis_type": "general",
+                "results": df.to_dict(),
+            }
+
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -69,7 +118,11 @@ async def summarize(
     """
     Summarize reviews.
     """
-    temp_file = "temp.csv"
-    pd.DataFrame(reviews.reviews, columns=["review"]).to_csv(temp_file, index=False)
-    summary = summarize_reviews(temp_file)
-    return {"status": "success", "summary": summary}
+    try:
+        temp_file = "temp.csv"
+        pd.DataFrame(reviews.reviews, columns=["review"]).to_csv(temp_file, index=False)
+        summary = summarize_reviews(temp_file)
+        return {"status": "success", "summary": summary}
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
