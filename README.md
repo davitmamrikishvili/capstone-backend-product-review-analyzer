@@ -17,7 +17,7 @@ A tool for scraping, analyzing, and summarizing product reviews. This project pr
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/review-sentiment-analysis.git
+git clone https://github.com/davitmamrikishvili/capstone-backend-product-review-analyzer.git
 cd review-sentiment-analysis
 ```
 
