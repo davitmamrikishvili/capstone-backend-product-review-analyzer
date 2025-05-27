@@ -4,9 +4,9 @@ import pandas as pd
 from analyzing.aspect_based_sentiment_analyzer import AspectBasedSentimentAnalyzer
 from analyzing.sentiment_analyzer import SentimentAnalyzer
 from analyzing.summarizer import Summarizer
-from scraping.scraper import Scraper
+from scraping.serpapi_scraper import SerpapiScraper
 
-scraper = Scraper()
+scraper = SerpapiScraper()
 
 summarizer = Summarizer()
 sentiment_analyzer = SentimentAnalyzer()
